@@ -96,11 +96,11 @@ Read data into R and format the date variable data
 ![](PA1_template_files/figure-html/mean-1.png)<!-- -->
 
 ```
-## [1] "Mean  :  9354"
+## [1] "Mean  :  10766"
 ```
 
 ```
-## [1] "Median:  10395"
+## [1] "Median:  10765"
 ```
 
 ## What is the average daily activity pattern?
@@ -127,8 +127,6 @@ Take the average step count for the time interval bin and assign it to the missi
 ```
 ## [1] "Median:  10766"
 ```
-No change to mean (since mean values were imputted for missing measurements), but median has changed.
-
 
 ## Are there differences in activity patterns between weekdays and weekends?
 ![](PA1_template_files/figure-html/weekend-1.png)<!-- -->

@@ -51,12 +51,12 @@ Read data into R and format the date variable data
 
 ## What is mean total number of steps taken per day?
 ```{r mean,echo=FALSE}
-    actAgg<-activity%>%group_by(date)%>%summarise(sumStep=sum(steps,na.rm=TRUE))
-    g<-ggplot(data = actAgg,aes(x=date,y=sumStep))
-    g+geom_bar(stat="identity")+geom_hline(yintercept=mean(actAgg$sumStep), color="red")+geom_hline(yintercept =median(actAgg$sumStep),color="blue")+labs(x="Date of Measurement",y="Total Steps taken per Day",title="Number of Steps taken per Day")+annotate("text",x=c(rep(min(actAgg$date),2)),y=c(mean(actAgg$sumStep),median(actAgg$sumStep)),color=c("red","blue"),label=c("Mean","Median"),vjust=-.4)+annotate("text",x=c(rep(max(actAgg$date)+1,2)),y=c(mean(actAgg$sumStep),median(actAgg$sumStep)),color=c("red","blue"),label=c(floor(mean(actAgg$sumStep)),median(actAgg$sumStep)),vjust=-.4)
+    actAgg<-aggregate(steps~date,data=activity,FUN=sum,na.action=na.omit)
+    g<-ggplot(data = actAgg,aes(x=steps))
+    g+geom_histogram(bins=30)+geom_vline(xintercept=mean(actAgg$steps), color="red")+geom_vline(xintercept=median(actAgg$steps),color="blue")+labs(x="Steps taken per Day",y="Count",title="Count of Steps taken per Day")
     
-    print(paste("Mean  : ", floor(mean(actAgg$sumStep))))
-    print(paste("Median: ", median(actAgg$sumStep)))
+    print(paste("Mean  : ", floor(mean(actAgg$steps))))
+    print(paste("Median: ", median(actAgg$steps)))
     
 ```
 
@@ -78,13 +78,17 @@ Take the average step count for the time interval bin and assign it to the missi
     actImp<-activity    
     actImp[is.na(activity$steps),]$steps<-actDaily[match(activity[is.na(activity$steps),]$interval,actDaily$interval),]$mStep
 
-    actImpAgg<-actImp%>%group_by(date)%>%summarise(sumStep=sum(steps))
+#    actImpAgg<-actImp%>%group_by(date)%>%summarise(sumStep=sum(steps))
 
-    g<-ggplot(data = actImpAgg,aes(x=date,y=sumStep))
-    g+geom_bar(stat="identity")+geom_hline(yintercept=mean(actImpAgg$sumStep), color="red")+geom_hline(yintercept =median(actImpAgg$sumStep),color="blue")+labs(x="Date of Measurement",y="Total Steps taken per Day",title="Number of Steps taken per Day")
+    actImpAgg<-aggregate(steps~date,data=actImp,FUN=sum,na.action=na.omit)
+    g<-ggplot(data = actImpAgg,aes(x=steps))
+#    g+geom_histogram(bins=30)    
     
-    print(paste("Mean  : ", floor(mean(actImpAgg$sumStep))))
-    print(paste("Median: ", floor(median(actImpAgg$sumStep))))
+#    g<-ggplot(data = actImpAgg,aes(x=steps))
+    g+geom_histogram(bins=30)+geom_vline(xintercept=mean(actImpAgg$steps), color="red")+geom_vline(xintercept =median(actImpAgg$steps),color="blue")+labs(x="Number of Steps",y="Count of Days with Step totals",title="Count of Steps taken per Day") #g+geom_bar(stat="identity")+geom_hline(yintercept=mean(actImpAgg$sumStep), color="red")+geom_hline(yintercept =median(actImpAgg$sumStep),color="blue")+labs(x="Date of Measurement",y="Total Steps taken per Day",title="Number of Steps taken per Day")
+    
+    print(paste("Mean  : ", floor(mean(actImpAgg$steps))))
+    print(paste("Median: ", floor(median(actImpAgg$steps))))
 
 ```
 
