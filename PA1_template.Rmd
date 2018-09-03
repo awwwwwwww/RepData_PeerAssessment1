@@ -1,25 +1,101 @@
 ---
 title: "Reproducible Research: Peer Assessment 1"
+author: "Adam Weissman"
+date: "1 September 2018"
 output: 
   html_document:
     keep_md: true
 ---
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE,cache = TRUE)
+```
+
+## Dependencies
+The following libraries are used by this script:
+```{r libraries,echo=TRUE}
+library(knitr)
+library(ggplot2)
+library(dplyr)
+library(readr)
+library(lubridate)
+
+```
+
+## Constants
+The following contstants will be  are used by this script:
+```{r constants,echo=TRUE}
+    dlzip="activity.zip"
+    dlurl="https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip"
+    datafilename="activity.csv"
+
+```
+
+
+
 
 ## Loading and preprocessing the data
-
+Download the file if it doesn't already exist in the workspace
+```{r download,echo=TRUE}
+if(!file.exists(dlzip)){
+    download.file(dlurl,dlzip)
+    unzip(dlzip)
+}
+```
+Read data into R and format the date variable data
+```{r prep, echo=TRUE,results='hide'}
+    activity<-read_csv(datafilename)
+    activity$date<-ymd(activity$date)
+```
 
 
 ## What is mean total number of steps taken per day?
-
-
+```{r mean,echo=FALSE}
+    actAgg<-activity%>%group_by(date)%>%summarise(sumStep=sum(steps,na.rm=TRUE))
+    g<-ggplot(data = actAgg,aes(x=date,y=sumStep))
+    g+geom_bar(stat="identity")+geom_hline(yintercept=mean(actAgg$sumStep), color="red")+geom_hline(yintercept =median(actAgg$sumStep),color="blue")+labs(x="Date of Measurement",y="Total Steps taken per Day",title="Number of Steps taken per Day")+annotate("text",x=c(rep(min(actAgg$date),2)),y=c(mean(actAgg$sumStep),median(actAgg$sumStep)),color=c("red","blue"),label=c("Mean","Median"),vjust=-.4)+annotate("text",x=c(rep(max(actAgg$date)+1,2)),y=c(mean(actAgg$sumStep),median(actAgg$sumStep)),color=c("red","blue"),label=c(floor(mean(actAgg$sumStep)),median(actAgg$sumStep)),vjust=-.4)
+    
+    print(paste("Mean  : ", floor(mean(actAgg$sumStep))))
+    print(paste("Median: ", median(actAgg$sumStep)))
+    
+```
 
 ## What is the average daily activity pattern?
-
+```{r daily,echo=FALSE}
+    actDaily<-activity%>%group_by(interval)%>%summarise(mStep=mean(steps,na.rm=TRUE))
+    g<-ggplot(data = actDaily,aes(x=interval,y=mStep))
+    g+geom_line()+labs(title="Average Daily Activity",x="Time of day interval",y="Average Steps at Time of Day")+geom_vline(xintercept=actDaily[which(actDaily$mStep==max(actDaily$mStep)),]$interval,color="red")
+    
+    print(paste("Most Active Average Time Interval  : ", actDaily[which(actDaily$mStep==max(actDaily$mStep)),]$interval))
+    
+```
 
 
 ## Imputing missing values
+Take the average step count for the time interval bin and assign it to the missing measurements
+```{r nas, echo=FALSE}
+    print(paste("Number of missing values: ", sum(is.na(activity$steps))))
+    actImp<-activity    
+    actImp[is.na(activity$steps),]$steps<-actDaily[match(activity[is.na(activity$steps),]$interval,actDaily$interval),]$mStep
 
+    actImpAgg<-actImp%>%group_by(date)%>%summarise(sumStep=sum(steps))
 
+    g<-ggplot(data = actImpAgg,aes(x=date,y=sumStep))
+    g+geom_bar(stat="identity")+geom_hline(yintercept=mean(actImpAgg$sumStep), color="red")+geom_hline(yintercept =median(actImpAgg$sumStep),color="blue")+labs(x="Date of Measurement",y="Total Steps taken per Day",title="Number of Steps taken per Day")
+    
+    print(paste("Mean  : ", floor(mean(actImpAgg$sumStep))))
+    print(paste("Median: ", floor(median(actImpAgg$sumStep))))
+
+```
 
 ## Are there differences in activity patterns between weekdays and weekends?
+```{r weekend,echo=FALSE}
+    actImp<-actImp%>%mutate(dow=factor(wday(actImp$date),levels=1:7,c("Weekend",rep("Weekday",5),"Weekend")))
+    actImpDaily<-actImp%>%group_by(dow,interval)%>%summarise(mStep=mean(steps))
+    g<-ggplot(actImpDaily,aes(x=interval,y=mStep))
+    g+geom_line()+facet_grid(dow~.)+labs(x="Time Interval",y="Average Steps",title="Average Daily Activity comparing Weekend and Weekday Activity")
+    print(paste("Mean steps weekday:",floor(sum(actImpDaily[actImpDaily$dow=="Weekday",]$mStep))))
+    print(paste("Mean steps weekend:",floor(sum(actImpDaily[actImpDaily$dow=="Weekend",]$mStep))))
+```
+
+
